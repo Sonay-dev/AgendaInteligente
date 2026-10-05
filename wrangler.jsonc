@@ -21,8 +21,12 @@
   // (e, na etapa 8, lembretes e briefings). O plano free permite até 5 cron triggers.
   "triggers": { "crons": ["*/5 * * * *"] },
   "vars": {
-    "APP_URL": "https://agenda.sonaydev.com"
+    "APP_URL": "https://agenda.sonaydev.com",
+    "EMAIL_FROM": "nao-responda@sonaydev.com"
   },
+  // E-mail de redefinição de senha (Cloudflare Email Service). No plano free só entrega para endereços
+  // verificados em Email Routing → Destination addresses (o e-mail de ALLOWED_EMAILS precisa estar lá).
+  "send_email": [{ "name": "EMAIL" }],
   // Etapa 10 — domínio personalizado (Custom Domain: a Cloudflare cria DNS e certificado)
   "routes": [{ "pattern": "agenda.sonaydev.com", "custom_domain": true }],
   "observability": { "enabled": true }

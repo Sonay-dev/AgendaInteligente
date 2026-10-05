@@ -179,9 +179,27 @@ colocado no `wrangler.jsonc`. `estoque-db` e `glp-recebimentos-db` intactos. Mig
 - Aviso do Better Auth no log ("could not determine a client IP" → rate limit num balde único para todos) corrigido em
   `lib/auth.ts`: `advanced.ipAddress.ipAddressHeaders: ["cf-connecting-ip"]` (vai no próximo deploy).
 
-**Próximo passo:** deploy (com confirmação) para registrar o cron `*/5` e levar a correção do rate limit; conferir
-com `wrangler triggers`/painel e repetir `POST /api/cron` sem token. A conta real o usuário cria sozinho em /login.
+**Deploy final (2026-10-05):** versão 8a58e277; cron `*/5` registrado e executando ("Ok" no `wrangler tail`); correção do rate limit no ar; `/login` 200, `/api/tasks` 401, `POST /api/cron` sem token 401; commit 1915c87 enviado.
+
+**Próximo passo:** o usuário cria a conta em /login; depois Fase 7 (validar/regravar secrets do Google e testar a conexão).
 A conexão com o Google em produção **não foi testada** (Fase 7).
 
 ## Ambiente
 - Node 24.21 LTS instalado no sistema (2026-10-04): `npm`, `npx wrangler` e `vitest` funcionam direto.
+
+## Ajustes no login (2026-10-05, sem commit e sem deploy)
+- `components/ui/password-input.tsx`: botão de olho para mostrar/ocultar a senha (login, criar conta, nova senha).
+- "Esqueci a senha" em /login → `requestPasswordReset` (resposta igual exista ou não a conta) → e-mail com link de
+  uso único (1 h) → `/redefinir-senha?token=` → nova senha; trocar a senha encerra todas as sessões. A página
+  `/redefinir-senha` fica fora do cache do service worker (o token vai na URL).
+- Envio: `lib/email.ts` com o binding `send_email` "EMAIL" (Cloudflare Email Service) e `EMAIL_FROM`
+  (nao-responda@sonaydev.com) em `vars`. No plano free só entrega para endereços verificados em Email Routing.
+  Em dev (APP_URL http) o link sai no terminal, sem envio.
+- **Pendente na Cloudflare (antes do deploy):** ativar Email Routing em sonaydev.com e verificar o e-mail de
+  ALLOWED_EMAILS em Destination addresses.
+- **D1 local:** a troca do database_id na Fase 1 fez o `next dev` usar um SQLite novo e vazio. Com autorização do
+  usuário, o arquivo antigo (9ba2b04b…) foi copiado para o nome novo (5d844247…); backup em `.wrangler/backup-d1-local/`.
+- Verificado: tsc, lint, 109 testes; no navegador o olho alterna o campo e a página de link inválido aparece. Local (curl):
+  pedido com conta existente e inexistente → mesma resposta; link sai no terminal; link → 302 para /redefinir-senha?token=;
+  link falso → ?error=INVALID_TOKEN; nova senha com token falso → INVALID_TOKEN. Token de teste apagado. A troca de
+  senha em si e o e-mail real não foram testados (testar em produção).

@@ -89,6 +89,8 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return; // escritas: direto para a rede
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  // /redefinir-senha leva o token do link na URL: nunca guardar em cache
+  if (url.pathname === "/redefinir-senha") return;
   if (url.pathname.startsWith("/api/auth") || url.pathname.startsWith("/_next/webpack-hmr") || url.pathname.startsWith("/__nextjs")) return;
   if (req.headers.get("RSC")) return; // navegação interna do Next: se falhar, ele recarrega a página (e cai abaixo)
 
