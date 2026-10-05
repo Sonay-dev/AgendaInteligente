@@ -107,6 +107,8 @@ export type TaskPatchInput = z.infer<typeof taskPatchSchema>;
 
 // ------------------------------------------------------------------ caixa de entrada (8A)
 export const inboxCreateSchema = z.object({
+  /** id gerado no aparelho: reenvio da fila offline não duplica o item */
+  id: z.uuid().optional(),
   rawText: z.string().trim().min(1, "texto vazio").max(2000),
   source: z.enum(["digitado", "voz"]).default("digitado"),
 });

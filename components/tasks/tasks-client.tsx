@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AlertCircle, CheckCircle2, Circle, ListChecks, MessageCircleReply, Plus, RefreshCw, Search, Trash2, UserRound } from "lucide-react";
 import { refreshCounts } from "@/components/app-nav";
+import { QUEUE_FLUSHED_EVENT, useOffline } from "@/components/offline/offline-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api, type Category } from "@/components/agenda/api";
@@ -37,6 +38,7 @@ export function TasksClient({ timezone: tz }: { timezone: string }) {
   const [quick, setQuick] = useState("");
   const [form, setForm] = useState<{ open: boolean; key: number; initial: TaskFormInitial }>({ open: false, key: 0, initial: {} });
   const seq = useRef(0);
+  const offline = useOffline();
 
   const load = useCallback(async () => {
     const id = ++seq.current;
@@ -53,6 +55,9 @@ export function TasksClient({ timezone: tz }: { timezone: string }) {
     void (async () => {
       await load();
     })();
+    const onFlushed = () => void load();
+    window.addEventListener(QUEUE_FLUSHED_EVENT, onFlushed);
+    return () => window.removeEventListener(QUEUE_FLUSHED_EVENT, onFlushed);
   }, [load]);
 
   useEffect(() => {
@@ -63,15 +68,21 @@ export function TasksClient({ timezone: tz }: { timezone: string }) {
   }, []);
 
   const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  // conclusões/reaberturas feitas offline: a lista (possivelmente do cache) já reflete a intenção
+  const pendingStatus = useMemo(
+    () => new Map(offline.pending.flatMap((e) => (e.kind === "task.status" ? [[e.payload.taskId, e.payload.status] as const] : []))),
+    [offline.pending],
+  );
   const visible = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("pt-BR");
     return tasks.filter(
       (t) =>
+        (!pendingStatus.has(t.id) || (pendingStatus.get(t.id) === "concluida") === (scope === "concluidas")) &&
         (!prios.length || prios.includes(t.priority)) &&
         (!cats.length || cats.includes(t.categoryId ?? "none")) &&
         (!q || `${t.title} ${t.notes ?? ""} ${t.assignee ?? ""}`.toLocaleLowerCase("pt-BR").includes(q)),
     );
-  }, [tasks, prios, cats, query]);
+  }, [tasks, prios, cats, query, pendingStatus, scope]);
   const quickDraft = useMemo(() => (quick.trim() ? parseQuickAdd(quick, new Date(), tz) : null), [quick, tz]);
   const filtered = prios.length + cats.length + (query.trim() ? 1 : 0) > 0;
 
@@ -127,10 +138,20 @@ export function TasksClient({ timezone: tz }: { timezone: string }) {
 
   async function complete(t: Task) {
     const done = t.status !== "concluida";
+    const status = done ? ("concluida" as const) : ("a_fazer" as const);
     // otimista: some da lista (ou volta) na hora
     setTasks((list) => list.filter((x) => x.id !== t.id));
-    await patch(t, { status: done ? "concluida" : "a_fazer" });
-    if (done)
+    const r = await api<{ task: Task }>(`/api/tasks/${t.id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+    if (!r.ok && r.status === 0) {
+      // sem conexão: fica na fila do aparelho e é enviado quando a rede voltar
+      await offline.enqueue({ kind: "task.status", payload: { taskId: t.id, status } });
+      toast(done ? "Concluída neste aparelho" : "Reaberta neste aparelho", { description: "Sem conexão: será enviada quando a internet voltar." });
+      return;
+    }
+    if (!r.ok) toast.error("Não foi possível salvar", { description: r.error });
+    refreshCounts();
+    await load();
+    if (done && r.ok)
       toast.success("Concluída", { description: t.title, action: { label: "Desfazer", onClick: () => void patch(t, { status: t.status }) } });
   }
 

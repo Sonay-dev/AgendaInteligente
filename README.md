@@ -82,11 +82,11 @@ ignorado e a sincronização acontece pelo botão "Sincronizar" ou pelo cron.
 
 > Notificações (8C) em produção: `npx wrangler secret put VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` e `VAPID_SUBJECT`.
 
-## 5. Como testar (etapas 1–8C)
+## 5. Como testar (etapas 1–9)
 
 **Automático**
 
-- [ ] `npm run typecheck`, `npm run lint` e `npm test` sem erros (103 testes: parser de linguagem natural, regras de tarefas, lembretes escalonados, Web Push (RFC 8291/8292), conflitos e recorrência no fuso,
+- [ ] `npm run typecheck`, `npm run lint` e `npm test` sem erros (109 testes: fila offline, parser de linguagem natural, regras de tarefas, lembretes escalonados, Web Push (RFC 8291/8292), conflitos e recorrência no fuso,
       mapeamento App ⇄ Google, regra "última alteração vence", backoff, criptografia, hash de senha, fusos/dia inteiro).
 
 **Login com e-mail e senha (etapa 4)**
@@ -169,4 +169,14 @@ ignorado e a sincronização acontece pelo botão "Sincronizar" ou pelo cron.
 - [ ] Na notificação: **Concluir** conclui a tarefa/compromisso; **Adiar 15 min** faz o lembrete voltar 15 min depois.
 - [ ] Toque no corpo da notificação abre o app no dia do compromisso (ou em Tarefas). P1 fica na tela até você tocar.
 - [ ] "Desativar neste aparelho" para de enviar só para aquele aparelho.
+
+**Uso offline / PWA (etapa 9)** — teste com `npm run preview` (no `npm run dev` a cópia offline não inicia)
+
+- [ ] Abra Agenda, Tarefas e Caixa uma vez com internet (o app guarda as telas e os dados).
+- [ ] Sem internet (modo avião no celular, ou DevTools → Network → Offline): as telas abrem com os últimos dados e
+      aparece o aviso "Sem conexão".
+- [ ] Ainda offline: anote algo na Caixa (aparece "aguardando conexão para enviar") e conclua uma tarefa (some da lista).
+- [ ] Volte a internet: em até 30 s (ou "Enviar agora") as alterações sobem, sem duplicar; o aviso some.
+- [ ] Instalar: no Android/Chrome "Instalar app"; no iPhone, Compartilhar → Adicionar à Tela de Início.
+- [ ] Sair da conta apaga os dados guardados no aparelho.
 

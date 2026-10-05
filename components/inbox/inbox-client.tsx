@@ -6,6 +6,7 @@ import {
   ArrowRight,
   CalendarPlus,
   Check,
+  CloudOff,
   ListPlus,
   Loader2,
   Mic,
@@ -18,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { refreshCounts } from "@/components/app-nav";
+import { QUEUE_FLUSHED_EVENT, useOffline } from "@/components/offline/offline-provider";
 import { api, type Category, type Conflict, type EventPayload } from "@/components/agenda/api";
 import { EventForm } from "@/components/agenda/event-form";
 import { TaskForm } from "@/components/tasks/task-form";
@@ -35,6 +37,8 @@ interface InboxItem {
   rawText: string;
   source: "digitado" | "voz";
   createdAt: string;
+  /** capturado offline, ainda na fila do aparelho */
+  queued?: boolean;
 }
 
 export function InboxClient({ timezone: tz }: { timezone: string }) {
@@ -50,6 +54,7 @@ export function InboxClient({ timezone: tz }: { timezone: string }) {
   const [eventFor, setEventFor] = useState<InboxItem | null>(null);
   const [taskFor, setTaskFor] = useState<InboxItem | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const offline = useOffline();
 
   const dictation = useDictation(
     useCallback((chunk: string) => {
@@ -74,9 +79,24 @@ export function InboxClient({ timezone: tz }: { timezone: string }) {
       const r = await api<{ categories: Category[] }>("/api/categories");
       if (r.ok) setCategories(r.data.categories);
     })();
+    const onFlushed = () => void load();
+    window.addEventListener(QUEUE_FLUSHED_EVENT, onFlushed);
+    return () => window.removeEventListener(QUEUE_FLUSHED_EVENT, onFlushed);
   }, [load]);
 
-  // triagem: mais antigos primeiro (ordem de chegada)
+  // capturas feitas offline (fila do aparelho) aparecem no topo até serem enviadas
+  const queued = useMemo<InboxItem[]>(
+    () =>
+      offline.pending.flatMap((e) =>
+        e.kind === "inbox.capture" && !items.some((i) => i.id === e.payload.id)
+          ? [{ id: e.payload.id, rawText: e.payload.rawText, source: e.payload.source, createdAt: e.createdAt, queued: true }]
+          : [],
+      ),
+    [offline.pending, items],
+  );
+  const shown = useMemo(() => [...[...queued].reverse(), ...items], [queued, items]);
+
+  // triagem: mais antigos primeiro (ordem de chegada); só itens que já estão no servidor
   const queue = useMemo(() => [...items].reverse(), [items]);
   const current = triage ? queue[Math.min(triage.index, queue.length - 1)] : undefined;
   const draft = useMemo(() => (current ? parseQuickAdd(current.rawText, new Date(), tz) : null), [current, tz]);
@@ -87,10 +107,18 @@ export function InboxClient({ timezone: tz }: { timezone: string }) {
     if (!rawText) return;
     dictation.stop();
     setSaving(true);
-    const r = await api<{ item: InboxItem }>("/api/inbox", { method: "POST", body: JSON.stringify({ rawText, source: viaVoice ? "voz" : "digitado" }) });
+    const payload = { id: crypto.randomUUID(), rawText, source: viaVoice ? ("voz" as const) : ("digitado" as const) };
+    const r = await api<{ item: InboxItem }>("/api/inbox", { method: "POST", body: JSON.stringify(payload) });
     setSaving(false);
-    if (!r.ok) return void toast.error("Não foi possível guardar", { description: r.error });
-    setItems((list) => [r.data.item, ...list]);
+    if (!r.ok && r.status === 0) {
+      // sem conexão: guarda no aparelho e envia quando a rede voltar (o id evita duplicar)
+      await offline.enqueue({ kind: "inbox.capture", payload });
+      toast("Guardado neste aparelho", { description: "Sem conexão: vai para a caixa quando a internet voltar." });
+    } else if (!r.ok) {
+      return void toast.error("Não foi possível guardar", { description: r.error });
+    } else {
+      setItems((list) => [r.data.item, ...list]);
+    }
     setText("");
     setViaVoice(false);
     refreshCounts();
@@ -252,7 +280,7 @@ export function InboxClient({ timezone: tz }: { timezone: string }) {
             <div key={i} className="h-12 rounded-xl bg-muted" />
           ))}
         </div>
-      ) : !items.length ? (
+      ) : !shown.length ? (
         <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
           <Check className="size-6" aria-hidden />
           <p className="font-medium text-foreground">Caixa vazia</p>
@@ -260,9 +288,16 @@ export function InboxClient({ timezone: tz }: { timezone: string }) {
         </div>
       ) : (
         <ul className="divide-y rounded-xl border" aria-label="Itens para triar">
-          {items.map((it) => (
+          {shown.map((it) => (
             <li key={it.id} className={cn("group flex items-center gap-2 px-3 py-2", current?.id === it.id && "bg-primary/5")}>
-              {editing?.id === it.id ? (
+              {it.queued ? (
+                <div className="min-w-0 flex-1 opacity-70">
+                  <span className="block text-sm break-words">{it.rawText}</span>
+                  <span className="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-300">
+                    <CloudOff className="size-3" aria-hidden /> aguardando conexão para enviar
+                  </span>
+                </div>
+              ) : editing?.id === it.id ? (
                 <form
                   className="flex flex-1 gap-2"
                   onSubmit={(e) => {

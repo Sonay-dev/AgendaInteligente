@@ -106,10 +106,53 @@ para subir tudo quando a Tasks API for ativada).
 - Atenção: com o Google conectado, o Google Calendar também avisa os compromissos (lembretes "popup" do evento) →
   pode haver aviso duplicado no celular.
 
-## Aguardando o usuário
-Testar a 8C (checklist "Notificações (etapa 8C)" na seção 5 do README): ativar num aparelho, "Enviar teste",
-e um compromisso/tarefa real para ver o lembrete com Concluir/Adiar.
-Pendências conhecidas: D1 remoto `agenda-db` ainda não criado; secrets VAPID ainda não enviados para produção.
+## Etapa 9 — PWA offline (2026-10-05)
+Manifest, ícones e service worker já vieram na 8C; a etapa 9 acrescenta o offline. (8D rotinas, 8E briefing e
+8F busca/contatos do prompt original ainda NÃO foram feitas — o usuário pulou da 8C para a 9.)
+- **Leitura offline** (`public/sw.js`): páginas e dados GET (`/api/events|tasks|inbox|categories|counts|google/status`)
+  da rede primeiro (tempo-limite de 4 s) e cópia salva quando falha; ao salvar uma página, salva também todos os
+  arquivos `/_next/static/` que ela usa (senão a cópia não "acorda" offline). Escritas nunca passam pelo cache.
+  Página nunca aberta → tela "Sem conexão" com links. `/api/auth` fora do cache.
+- **Fila de escritas offline** (`lib/offline/queue.ts` + IndexedDB em `lib/offline/idb-store.ts`): captura na caixa
+  de entrada e concluir/reabrir tarefa. Envia ao abrir o app, no evento "online" e a cada 30 s com pendências;
+  erro de rede/5xx/401 → tenta de novo; 4xx → descarta e avisa. Captura idempotente (id gerado no aparelho;
+  `POST /api/inbox` com `onConflictDoNothing`). Concluir/reabrir a mesma tarefa várias vezes: vale a última.
+- `components/offline/offline-provider.tsx`: banner "Sem conexão…/N alterações aguardando envio" + "Enviar agora";
+  itens da fila aparecem nas telas (captura "aguardando conexão", tarefa concluída some da lista mesmo com a lista
+  vinda do cache).
+- Ao **sair da conta**: apaga caches `agenda-*` e a fila (não deixa dados da conta no aparelho).
+- Service worker agora é registrado sempre (antes só com notificações permitidas).
+- `custom-worker.ts`: `@ts-ignore` no import do `.open-next` (o `tsc` passava sem build e falhava com build,
+  porque o `cloudflare-env.d.ts` passou a importar o worker).
+- Verificado: tsc (com e sem build), lint, **109 testes** (6 da fila). No **build de produção** (`npm run preview`),
+  com o servidor desligado para simular falta de rede: caixa abriu do cache e funcionou; captura offline foi para a
+  fila e apareceu como "aguardando conexão"; tarefa concluída offline sumiu e continuou escondida após recarregar;
+  ao religar, a fila foi enviada sozinha (item no servidor uma vez só; tarefa `concluida`). Dados de teste apagados.
+- Atenção: no `npm run dev` a página salva NÃO funciona offline (o modo dev depende do servidor). Teste offline com
+  `npm run preview`.
+
+## Etapa 10 — Deploy (em andamento, pausado em 2026-10-05)
+Roteiro do usuário em fases 0–8; parar ao fim de cada fase e pedir confirmação antes de QUALQUER comando que altere
+a conta Cloudflare ou o Google. Não reutilizar AUTH_SECRET/ENCRYPTION_KEY/CRON_SECRET/VAPID do .dev.vars (apareceram
+em print). Não tocar nos D1 `estoque-db` e `glp-recebimentos-db`.
+
+**Fase 0 (verificações) — feita, só leitura:**
+- Node v24.21.0, wrangler 4.147.0
+- Conta: sonaydev88@gmail.com, account_id 5ddf30536473e35eb3bac8332228cf5e (token OAuth: workers/d1/routes/ssl write,
+  zone read)
+- D1 remoto: não existe `agenda-db` (só estoque-db e glp-recebimentos-db); Worker `agenda` não existe na conta
+- wrangler.jsonc ok (name agenda, main custom-worker.ts, compat 2026-09-01, nodejs_compat, assets .open-next/assets,
+  D1 DB com database_id zerado, cron */5, APP_URL de produção, routes comentado)
+- Nenhum segredo rastreado; tsc, lint e 109 testes ok
+
+**Respostas do usuário (2026-10-05):**
+1. Sim — a conta acima hospeda o sonaydev.com.
+2. O repositório continua PÚBLICO.
+3. Etapa 9 commitada e enviada antes do deploy.
+Notas: cadastrar também `VAPID_SUBJECT` na Fase 2; recomendado gerar novo GOOGLE_CLIENT_SECRET; o cadastro em
+produção é em /login → "Criar conta" (não existe /cadastro).
+
+**Próximo passo:** Fase 1 — `npx wrangler d1 create agenda-db` (só após confirmação).
 
 ## Ambiente
 - Node 24.21 LTS instalado no sistema (2026-10-04): `npm`, `npx wrangler` e `vitest` funcionam direto.

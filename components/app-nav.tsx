@@ -30,8 +30,8 @@ export function AppNav() {
   }, []);
 
   useEffect(() => {
-    // notificações já permitidas: registra/atualiza o service worker a cada abertura do app
-    if ("serviceWorker" in navigator && "Notification" in window && Notification.permission === "granted") {
+    // service worker: leitura offline (etapa 9) e notificações (8C); registrar de novo também o atualiza
+    if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => undefined);
     }
   }, []);

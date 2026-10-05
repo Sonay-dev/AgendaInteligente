@@ -1,7 +1,9 @@
 // Worker de entrada: reaproveita o fetch gerado pelo OpenNext e acrescenta o
 // handler `scheduled` do Cron Trigger, que chama a rota interna /api/cron.
 // Compilado pelo wrangler (fora do tsconfig, pois .open-next só existe após o build).
-// @ts-expect-error -- gerado por `opennextjs-cloudflare build`
+// .open-next só existe depois do build; ts-ignore (e não ts-expect-error) para o tsc passar com ou sem build.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore -- gerado por `opennextjs-cloudflare build`
 import { default as handler } from "./.open-next/worker.js";
 
 interface Env {

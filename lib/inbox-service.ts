@@ -26,9 +26,17 @@ export async function inboxCount(ctx: Ctx): Promise<number> {
   return Number(r?.n ?? 0);
 }
 
-export async function captureInbox(ctx: Ctx, rawText: string, source: "digitado" | "voz"): Promise<InboxRow> {
-  const [row] = await ctx.db.insert(inboxItems).values({ userId: ctx.user.id, rawText, source }).returning();
-  return row!;
+/** Idempotente quando o aparelho manda o próprio id (fila offline reenviando). */
+export async function captureInbox(ctx: Ctx, rawText: string, source: "digitado" | "voz", id?: string): Promise<InboxRow> {
+  const [row] = await ctx.db
+    .insert(inboxItems)
+    .values({ ...(id ? { id } : {}), userId: ctx.user.id, rawText, source })
+    .onConflictDoNothing()
+    .returning();
+  if (row) return row;
+  const [existing] = await ctx.db.select().from(inboxItems).where(and(eq(inboxItems.id, id!), eq(inboxItems.userId, ctx.user.id)));
+  if (!existing) throw new HttpError(409, "id já usado");
+  return existing;
 }
 
 async function getPending(ctx: Ctx, id: string): Promise<InboxRow> {
