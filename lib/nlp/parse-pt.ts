@@ -150,6 +150,8 @@ function takeDate(t: Text, todayYmd: string, todayDow: number, now: Date, tz: st
   if (t.take(re(`${B}depois\\s+de\\s+amanh[ãa]${E}`))) return { ymd: addDaysYmd(todayYmd, 2), label: "depois de amanhã" };
   if (t.take(re(`${B}amanh[ãa]${E}`))) return { ymd: addDaysYmd(todayYmd, 1), label: "amanhã" };
   if (t.take(re(`${B}hoje${E}`))) return { ymd: todayYmd, label: "hoje" };
+  if (t.take(re(`${B}anteontem${E}`))) return { ymd: addDaysYmd(todayYmd, -2), label: "anteontem" };
+  if (t.take(re(`${B}ontem${E}`))) return { ymd: addDaysYmd(todayYmd, -1), label: "ontem" };
   let m = t.take(re(`${B}(?:daqui\\s+a|em)\\s+(\\d{1,3})\\s+dias?${E}`));
   if (m) return { ymd: addDaysYmd(todayYmd, Number(m[1])), label: `em ${m[1]} dias` };
   if (t.take(re(`${B}(?:semana\\s+que\\s+vem|pr[óo]xima\\s+semana)${E}`))) {

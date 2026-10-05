@@ -56,6 +56,7 @@ describe("parseQuickAdd — datas", () => {
     ["consulta 15/10 14h", "2026-10-15"],
     ["evento 10 de novembro", "2026-11-10"],
     ["revisão daqui a 3 dias", "2026-10-07"],
+    ["relatório atrasado de ontem", "2026-10-03"],
   ])("%s → %s", (text, date) => {
     expect(p(text).date).toBe(date);
   });

@@ -79,11 +79,11 @@ O Cron Trigger (`*/5 * * * *`) chama `/api/cron`: reenvia alterações pendentes
 `events.watch`. O push do Google (`/api/google/webhook`) só funciona com HTTPS público — no local ele é
 ignorado e a sincronização acontece pelo botão "Sincronizar" ou pelo cron.
 
-## 5. Como testar (etapas 1–7)
+## 5. Como testar (etapas 1–8B)
 
 **Automático**
 
-- [ ] `npm run typecheck`, `npm run lint` e `npm test` sem erros (74 testes: parser de linguagem natural, conflitos e recorrência no fuso,
+- [ ] `npm run typecheck`, `npm run lint` e `npm test` sem erros (87 testes: parser de linguagem natural, regras de tarefas, conflitos e recorrência no fuso,
       mapeamento App ⇄ Google, regra "última alteração vence", backoff, criptografia, hash de senha, fusos/dia inteiro).
 
 **Login com e-mail e senha (etapa 4)**
@@ -140,4 +140,19 @@ ignorado e a sincronização acontece pelo botão "Sincronizar" ou pelo cron.
 - [ ] Salvar um horário sobreposto mostra o aviso de conflito com "Salvar mesmo assim".
 - [ ] Estados: esqueleto ao carregar; erro com "Tentar de novo" (ex.: pare o `npm run dev` e troque de semana); vazio com
       atalho para criar.
+
+**Caixa de entrada e tarefas (etapas 8A e 8B)**
+
+- [ ] A barra inferior leva a Agenda, Tarefas, Caixa e Ajustes; Caixa mostra quantos itens faltam triar e Tarefas
+      mostra (em vermelho) quantas estão atrasadas.
+- [ ] Caixa: digite e Enter guarda; o microfone dita em português (o navegador pede permissão; no Chrome o áudio é
+      processado pelo Google). Itens podem ser editados ou descartados.
+- [ ] "Triagem": um item por vez → Compromisso (formulário da agenda já preenchido, com aviso de conflito),
+      Tarefa (formulário de tarefa preenchido), Descartar ou Pular. A caixa esvazia e o contador some.
+- [ ] Tarefas: digite `enviar proposta urgente amanhã 9h` → cria P1 para amanhã 09:00. Uma tarefa com prazo vencido
+      (ex.: `relatório ontem`) aparece em "Atrasadas", em vermelho.
+- [ ] Abra uma tarefa: checklist (adicionar, marcar, remover, salvo na hora), status "Aguardando" + "Aguardando quem?";
+      na aba Aguardando aparecem os dias sem retorno e o botão "Cobrei" (zera a contagem).
+- [ ] Concluir mostra "Desfazer"; concluídas ficam 30 dias na aba Concluídas e podem ser reabertas.
+- [ ] As tarefas NÃO vão para o Google Tasks ainda (sincronização desligada de propósito).
 

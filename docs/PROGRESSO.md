@@ -50,9 +50,40 @@ Login + conexão + sync com o Google validados pelo usuário antes de começar.
 - Verificado: tsc, lint, **74 testes** (33 do parser, 2 de recorrência no fuso); no navegador (sessão do usuário,
   sem salvar nada): as 4 visões, filtros, categorias, e "academia seg, qua e sex 6h" preenchendo o formulário certo
 
+## Etapa 7 aprovada (2026-10-04) — semana começa na segunda-feira (decisão do usuário)
+
+## Git / GitHub (2026-10-04)
+- Repositório: https://github.com/Sonay-dev/AgendaInteligente (**público**, a pedido do usuário), branch `main`
+- `.gitignore` cobre `.dev.vars*` (exceto `.example`), `.env*`, `.wrangler`, `node_modules`, `.next`; `.gitattributes` força LF
+- Nunca commitar segredos: local em `.dev.vars`, produção em `wrangler secret put`
+
+## Etapa 8 — 8A e 8B (2026-10-05, aguardando teste); 8C depois
+Escopo pedido: 8A e 8B primeiro e parar. Google Tasks **desligado** (tarefas só locais; `sync_status` fica "pending"
+para subir tudo quando a Tasks API for ativada).
+- Navegação inferior comum (grupo de rotas `app/(app)/`, `components/app-nav.tsx`): Agenda · Tarefas (contador vermelho
+  de atrasadas) · Caixa (contador de itens) · Ajustes. `GET /api/counts`.
+- **8A Caixa de entrada** (`/caixa-de-entrada`): captura digitada ou **ditada em pt-BR** (Web Speech API,
+  `components/inbox/use-dictation.ts`; Chrome/Edge/Safari; no Chrome o áudio passa pelos servidores do Google);
+  editar/descartar itens; **Triagem** um item por vez (mais antigo primeiro): Compromisso (formulário da agenda
+  preenchido pelo parser, com aviso de conflito) · Tarefa (formulário de tarefa preenchido) · Descartar · Pular.
+  API: `/api/inbox`, `/api/inbox/[id]` (PATCH texto, DELETE = descartar), `/api/inbox/[id]/triage`
+  (tarefa + item processado no mesmo lote).
+- **8B Tarefas** (`/tarefas`): abas Abertas / Aguardando / Concluídas (30 dias); Abertas agrupadas em Atrasadas
+  (vermelho) · Hoje · Amanhã · Próximos 7 dias · Depois · Sem data, ordenadas por prioridade e prazo; criação rápida
+  pelo parser (cria direto, toast com "Editar"); P1/P2/P3; prazo com hora opcional; status "aguardando" com
+  "quem", dias sem retorno (âmbar ≥3, vermelho ≥7) e botão "Cobrei"; **checklist** (salvo na hora em tarefas
+  existentes); filtros por prioridade/categoria e busca; concluir com "Desfazer".
+  API: `/api/tasks`, `/api/tasks/[id]`, `/api/tasks/[id]/subtasks[/subId]`.
+- Regras puras em `lib/tasks-logic.ts` (atraso no fuso do usuário, agrupamento, efeitos de status, rascunho a partir
+  do texto); serviços `lib/tasks-service.ts` e `lib/inbox-service.ts`. Parser aprendeu "ontem"/"anteontem".
+- Verificado: tsc, lint, **87 testes** (12 de tarefas). No navegador (sessão do usuário): captura → triagem → tarefa
+  com checklist; atrasada em vermelho + contador; aguardando com "Cobrei". Itens de teste apagados depois.
+  **Não testado:** o ditado por voz (precisa de microfone/permissão — testar no celular).
+
 ## Aguardando o usuário
-Testar a etapa 7 (checklist "Interface base" na seção 5 do README). Só depois seguir para a etapa 8.
-Pendências conhecidas: D1 remoto `agenda-db` ainda não criado; semana começa na segunda (trocar para domingo se preferir).
+Testar 8A e 8B (checklist "Caixa de entrada e tarefas" na seção 5 do README). Depois: 8C (lembretes escalonados
+com Web Push e ações Concluir/Adiar).
+Pendências conhecidas: D1 remoto `agenda-db` ainda não criado.
 
 ## Ambiente
 - Node 24.21 LTS instalado no sistema (2026-10-04): `npm`, `npx wrangler` e `vitest` funcionam direto.
