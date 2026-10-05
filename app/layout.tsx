@@ -9,6 +9,9 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const metadata: Metadata = {
   title: "Agenda Inteligente",
   description: "Segundo cérebro: compromissos e tarefas sincronizados com o Google",
+  applicationName: "Agenda Inteligente",
+  appleWebApp: { capable: true, title: "Agenda", statusBarStyle: "default" },
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {

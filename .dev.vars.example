@@ -12,6 +12,9 @@ ENCRYPTION_KEY=
 CRON_SECRET=
 # e-mails que podem criar conta e entrar (e-mail + senha), separados por vírgula
 ALLOWED_EMAILS=voce@gmail.com
-# etapa 8C (Web Push)
+# etapa 8C (Web Push) — par ECDSA P-256 em base64url: pública = ponto "raw" (65 bytes), privada = "d" (32 bytes)
+# gere com: node -e "crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign']).then(async k=>console.log(Buffer.from(await crypto.subtle.exportKey('raw',k.publicKey)).toString('base64url'),(await crypto.subtle.exportKey('jwk',k.privateKey)).d))"
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
+# contato exigido pelos serviços de push (mailto: ou https:)
+VAPID_SUBJECT=mailto:voce@gmail.com

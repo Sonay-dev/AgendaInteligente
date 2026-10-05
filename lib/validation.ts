@@ -119,6 +119,25 @@ export const triageSchema = z.discriminatedUnion("as", [
   z.object({ as: z.literal("descartado") }),
 ]);
 
+// ------------------------------------------------------------------ Web Push (8C)
+// Só serviços de push conhecidos (evita usar o servidor para chamar URLs arbitrárias).
+const PUSH_HOSTS = [/(^|\.)fcm\.googleapis\.com$/, /(^|\.)push\.services\.mozilla\.com$/, /(^|\.)notify\.windows\.com$/, /(^|\.)push\.apple\.com$/];
+const pushEndpoint = z
+  .url()
+  .max(1000)
+  .refine((u) => {
+    const url = new URL(u);
+    return url.protocol === "https:" && PUSH_HOSTS.some((re) => re.test(url.hostname));
+  }, "serviço de push não suportado");
+const b64url = (min: number, max: number) => z.string().regex(/^[A-Za-z0-9_-]+=*$/).min(min).max(max);
+
+export const pushSubscribeSchema = z.object({
+  endpoint: pushEndpoint,
+  keys: z.object({ p256dh: b64url(80, 100), auth: b64url(16, 30) }),
+});
+export const pushUnsubscribeSchema = z.object({ endpoint: z.string().max(1000) });
+export const notificationActionSchema = z.object({ token: z.string().max(1000), action: z.enum(["concluir", "adiar"]) });
+
 export type CategoryInput = z.infer<typeof categorySchema>;
 export type EventCreateInput = z.infer<typeof eventCreateSchema>;
 export type EventPatchInput = z.infer<typeof eventPatchSchema>;

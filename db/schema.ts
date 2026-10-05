@@ -295,6 +295,22 @@ export const pushSubscriptions = sqliteTable("push_subscriptions", {
   createdAt: createdAt(),
 });
 
+/** Lembretes adiados ("Adiar" na notificação): disparados pelo cron quando fire_at chega. */
+export const scheduledNotifications = sqliteTable(
+  "scheduled_notifications",
+  {
+    id: id(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    itemType: text("item_type", { enum: ["event", "task"] }).notNull(),
+    itemId: text("item_id").notNull(),
+    occurrenceStart: text("occurrence_start"), // ocorrência de série recorrente
+    fireAt: text("fire_at").notNull(),
+    sentAt: text("sent_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("scheduled_user_fire").on(t.userId, t.sentAt, t.fireAt)],
+);
+
 export const notificationLog = sqliteTable(
   "notification_log",
   {

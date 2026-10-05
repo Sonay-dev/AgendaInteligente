@@ -48,7 +48,8 @@ Variáveis do `.dev.vars`:
 | `ENCRYPTION_KEY` | 32 bytes em base64 — criptografa os tokens do Google (`openssl rand -base64 32`) |
 | `CRON_SECRET` | protege a rota interna `/api/cron` (`openssl rand -hex 24`) |
 | `ALLOWED_EMAILS` | e-mails que podem criar conta e entrar, separados por vírgula |
-| `VAPID_*` | só na etapa 8 (notificações push) |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | par de chaves do Web Push (comando para gerar no `.dev.vars.example`) |
+| `VAPID_SUBJECT` | contato exigido pelos serviços de push (`mailto:voce@...`) |
 
 ## 3. Scripts
 
@@ -79,11 +80,13 @@ O Cron Trigger (`*/5 * * * *`) chama `/api/cron`: reenvia alterações pendentes
 `events.watch`. O push do Google (`/api/google/webhook`) só funciona com HTTPS público — no local ele é
 ignorado e a sincronização acontece pelo botão "Sincronizar" ou pelo cron.
 
-## 5. Como testar (etapas 1–8B)
+> Notificações (8C) em produção: `npx wrangler secret put VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` e `VAPID_SUBJECT`.
+
+## 5. Como testar (etapas 1–8C)
 
 **Automático**
 
-- [ ] `npm run typecheck`, `npm run lint` e `npm test` sem erros (87 testes: parser de linguagem natural, regras de tarefas, conflitos e recorrência no fuso,
+- [ ] `npm run typecheck`, `npm run lint` e `npm test` sem erros (103 testes: parser de linguagem natural, regras de tarefas, lembretes escalonados, Web Push (RFC 8291/8292), conflitos e recorrência no fuso,
       mapeamento App ⇄ Google, regra "última alteração vence", backoff, criptografia, hash de senha, fusos/dia inteiro).
 
 **Login com e-mail e senha (etapa 4)**
@@ -155,4 +158,15 @@ ignorado e a sincronização acontece pelo botão "Sincronizar" ou pelo cron.
       na aba Aguardando aparecem os dias sem retorno e o botão "Cobrei" (zera a contagem).
 - [ ] Concluir mostra "Desfazer"; concluídas ficam 30 dias na aba Concluídas e podem ser reabertas.
 - [ ] As tarefas NÃO vão para o Google Tasks ainda (sincronização desligada de propósito).
+
+**Notificações (etapa 8C)**
+
+- [ ] Configurações → Notificações → "Ativar neste aparelho" → aceite a permissão → "Enviar teste": a notificação
+      chega em alguns segundos. No iPhone: primeiro Compartilhar → Adicionar à Tela de Início e abra pelo ícone.
+- [ ] Crie uma tarefa P1 para daqui a ~15 min: chegam "Vence em 10 min" e "Venceu agora" (o servidor verifica a cada
+      5 min; no `npm run dev` local não há cron — chame `/api/cron` à mão:
+      `curl -X POST -H "authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron`).
+- [ ] Na notificação: **Concluir** conclui a tarefa/compromisso; **Adiar 15 min** faz o lembrete voltar 15 min depois.
+- [ ] Toque no corpo da notificação abre o app no dia do compromisso (ou em Tarefas). P1 fica na tela até você tocar.
+- [ ] "Desativar neste aparelho" para de enviar só para aquele aparelho.
 

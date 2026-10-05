@@ -2,10 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getDb } from "@/db";
+import { getEnv } from "@/lib/env";
 import { getConnection } from "@/lib/google/oauth";
 import { getCurrentUser } from "@/lib/session";
 import { CategoriesManager } from "./categories-manager";
 import { GoogleIntegration } from "./google-integration";
+import { NotificationsSettings } from "./notifications-settings";
 
 const GOOGLE_ERRORS: Record<string, string> = {
   cancelado: "Você cancelou a conexão no Google.",
@@ -18,7 +20,7 @@ const GOOGLE_ERRORS: Record<string, string> = {
 export default async function ConfiguracoesPage({ searchParams }: PageProps<"/configuracoes">) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  const conn = await getConnection(await getDb(), user.id);
+  const [conn, env] = await Promise.all([getDb().then((db) => getConnection(db, user.id)), getEnv()]);
   const sp = await searchParams;
   const errorCode = typeof sp.google_erro === "string" ? sp.google_erro : null;
   const flash = sp.google === "conectado"
@@ -41,6 +43,7 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
         connection={conn ? { status: conn.status, email: conn.googleEmail, connectedAt: conn.connectedAt } : null}
         timezone={user.timezone}
       />
+      <NotificationsSettings vapidPublicKey={env.VAPID_PUBLIC_KEY || null} />
       <CategoriesManager />
     </main>
   );

@@ -80,10 +80,36 @@ para subir tudo quando a Tasks API for ativada).
   com checklist; atrasada em vermelho + contador; aguardando com "Cobrei". Itens de teste apagados depois.
   **Não testado:** o ditado por voz (precisa de microfone/permissão — testar no celular).
 
+## Etapa 8C — lembretes escalonados com Web Push (2026-10-05, aguardando teste)
+- Web Push sem dependências, só Web Crypto (roda no Workers): `lib/push/webpush.ts` — aes128gcm (RFC 8291,
+  conferido byte a byte com o exemplo do Apêndice A) + VAPID ES256 (RFC 8292). Chaves em `.dev.vars`
+  (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`); produção: `wrangler secret put` das três.
+- Escalonamento puro em `lib/reminders/schedule.ts` (tabela em Configurações → Notificações):
+  compromissos usam os lembretes do evento (P1 1 dia/1 h/10 min · P2 1 h/10 min · P3 10 min; dia inteiro 08:00,
+  P1 também véspera 18:00); tarefas com prazo: P1 véspera + 1 h + 10 min + na hora + cobrança diária 08:00 por até
+  7 dias · P2 1 h + 10 min + na hora + 1 cobrança · P3 10 min (dia inteiro: 08:00 do dia).
+- Motor `lib/reminders/engine.ts` no cron de 5 min: janela de envio −30 min/+2,5 min; registra em
+  `notification_log` antes de enviar (no máximo uma vez); se vários avisos do mesmo item venceram juntos, manda só
+  o mais recente; até 8 por execução; assinatura que o serviço de push dá como encerrada é apagada.
+- Ações na notificação: **Concluir** (não aparece em séries recorrentes) e **Adiar 15 min** (tabela nova
+  `scheduled_notifications`, migração `0002_lembretes_adiados.sql`). Autenticadas por token HMAC assinado com
+  `AUTH_SECRET` (expira em 3 dias) → funciona mesmo com a sessão expirada. `POST /api/notifications/action`.
+- `public/sw.js` (P1 fica na tela até tocar; toque abre o app no dia/tarefas), `app/manifest.ts` + ícones em
+  `public/icons/` (PWA instalável; no iPhone push só com o app na Tela de Início, iOS 16.4+), cabeçalhos de segurança
+  e do `/sw.js` no `next.config.ts`.
+- API: `/api/push/subscribe` (POST/DELETE; só serviços de push conhecidos: FCM, Mozilla, Windows, Apple),
+  `/api/push/test`, `/api/push/devices`. Configurações → Notificações: ativar/testar/desativar neste aparelho.
+- Verificado: tsc, lint, **103 testes** (escalonamento, RFC 8291, VAPID, token). E2E local com dados temporários
+  (apagados): cron pegou o aviso da tarefa, registrou e enviou ao FCM; inscrição falsa recusada pelo FCM foi apagada
+  sozinha; sem reenvio na execução seguinte; Adiar criou o agendamento; token adulterado → 401; Concluir concluiu.
+  **Não testado:** a notificação chegando de verdade num aparelho (precisa da permissão do usuário).
+- Atenção: com o Google conectado, o Google Calendar também avisa os compromissos (lembretes "popup" do evento) →
+  pode haver aviso duplicado no celular.
+
 ## Aguardando o usuário
-Testar 8A e 8B (checklist "Caixa de entrada e tarefas" na seção 5 do README). Depois: 8C (lembretes escalonados
-com Web Push e ações Concluir/Adiar).
-Pendências conhecidas: D1 remoto `agenda-db` ainda não criado.
+Testar a 8C (checklist "Notificações (etapa 8C)" na seção 5 do README): ativar num aparelho, "Enviar teste",
+e um compromisso/tarefa real para ver o lembrete com Concluir/Adiar.
+Pendências conhecidas: D1 remoto `agenda-db` ainda não criado; secrets VAPID ainda não enviados para produção.
 
 ## Ambiente
 - Node 24.21 LTS instalado no sistema (2026-10-04): `npm`, `npx wrangler` e `vitest` funcionam direto.

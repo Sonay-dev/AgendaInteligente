@@ -30,6 +30,13 @@ export function AppNav() {
   }, []);
 
   useEffect(() => {
+    // notificações já permitidas: registra/atualiza o service worker a cada abertura do app
+    if ("serviceWorker" in navigator && "Notification" in window && Notification.permission === "granted") {
+      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => undefined);
+    }
+  }, []);
+
+  useEffect(() => {
     void (async () => {
       await load();
     })();
