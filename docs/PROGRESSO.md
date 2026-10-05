@@ -152,7 +152,36 @@ em print). Não tocar nos D1 `estoque-db` e `glp-recebimentos-db`.
 Notas: cadastrar também `VAPID_SUBJECT` na Fase 2; recomendado gerar novo GOOGLE_CLIENT_SECRET; o cadastro em
 produção é em /login → "Criar conta" (não existe /cadastro).
 
-**Próximo passo:** Fase 1 — `npx wrangler d1 create agenda-db` (só após confirmação).
+**Fase 1 (2026-10-05) — feita:** `agenda-db` criado (região ENAM, id 510305d6-7282-4e7f-97f1-0d80e5cde5e3) e id
+colocado no `wrangler.jsonc`. `estoque-db` e `glp-recebimentos-db` intactos. Migrações 0000_inicial,
+0001_google_connections e 0002_lembretes_adiados **aplicadas** no remoto (18 tabelas do app, "No migrations to apply").
+
+**Fase 2 (2026-10-05) — feita, com ressalva:** 9 segredos no Worker `agenda` (só os nomes ficam registrados aqui):
+- Gerados com valores NOVOS (nada reaproveitado do `.dev.vars`) e enviados com `wrangler secret bulk`, sem imprimir:
+  AUTH_SECRET, ENCRYPTION_KEY, CRON_SECRET, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, ALLOWED_EMAILS.
+- GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET: cadastrados pelo usuário com `! npx wrangler secret put`, que roda sem
+  entrada interativa → **podem estar vazios**. O usuário decidiu não regravar agora; validar na Fase 7.
+- O primeiro `secret bulk` criou o Worker `agenda`. APP_URL fica em `vars` no `wrangler.jsonc`.
+
+**Fase 3 (2026-10-05) — build e primeiro deploy:**
+- tsc, lint e 109 testes ok; build OpenNext ok; pacote 12,1 MB / 2,5 MB gzip (limite do plano free: 3 MB).
+- 1º deploy: código enviado, mas sem endereço (conta sem subdomínio workers.dev e rota comentada).
+- Rota `{ "pattern": "agenda.sonaydev.com", "custom_domain": true }` ativada (DNS conferido pelo usuário: não havia
+  registro "agenda"). 2º deploy: Custom Domain criado; HTTPS ok (TLS 1.3); `/login` 200; `/agenda`, `/tarefas`,
+  `/caixa-de-entrada`, `/configuracoes` → 307 para `/login`; `/api/tasks` 401; `POST /api/cron` sem token 401.
+- Cron NÃO registrado no 2º deploy (erro 10063: a conta precisa de subdomínio workers.dev mesmo com domínio próprio).
+  O usuário registrou `sonaydev88.workers.dev`; falta refazer o deploy para registrar o cron.
+- Teste de CPU do PBKDF2 (plano **free**), sem criar conta, com `wrangler tail`: cadastro com e-mail fora da lista →
+  403 `email_nao_autorizado` (264 ms de CPU); login com senha errada → 401 (33 ms). Os dois caminhos calculam o hash
+  completo (conferido no código do Better Auth). **Nenhum 1102 / "exceeded CPU"**. Banco continua com 0 usuários,
+  contas e sessões. Ressalva: páginas comuns também mostram 260–520 ms de CPU sem erro, ou seja, o limite de 10 ms não
+  está sendo aplicado ao pé da letra hoje; não há garantia de que nunca dará 1102.
+- Aviso do Better Auth no log ("could not determine a client IP" → rate limit num balde único para todos) corrigido em
+  `lib/auth.ts`: `advanced.ipAddress.ipAddressHeaders: ["cf-connecting-ip"]` (vai no próximo deploy).
+
+**Próximo passo:** deploy (com confirmação) para registrar o cron `*/5` e levar a correção do rate limit; conferir
+com `wrangler triggers`/painel e repetir `POST /api/cron` sem token. A conta real o usuário cria sozinho em /login.
+A conexão com o Google em produção **não foi testada** (Fase 7).
 
 ## Ambiente
 - Node 24.21 LTS instalado no sistema (2026-10-04): `npm`, `npx wrangler` e `vitest` funcionam direto.

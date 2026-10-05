@@ -37,6 +37,8 @@ function createAuth(env: Env) {
       cookiePrefix: "agenda",
       defaultCookieAttributes: { httpOnly: true, secure, sameSite: "lax", path: "/" },
       database: { generateId: () => crypto.randomUUID() },
+      // IP real do cliente para o rate limit: a Cloudflare sempre sobrescreve cf-connecting-ip
+      ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
     },
     onAPIError: { errorURL: "/login" },
     databaseHooks: {

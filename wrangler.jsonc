@@ -13,8 +13,7 @@
     {
       "binding": "DB",
       "database_name": "agenda-db",
-      // Cole aqui o id exibido por: npx wrangler d1 create agenda-db
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "510305d6-7282-4e7f-97f1-0d80e5cde5e3",
       "migrations_dir": "drizzle"
     }
   ],
@@ -24,7 +23,7 @@
   "vars": {
     "APP_URL": "https://agenda.sonaydev.com"
   },
-  // Etapa 10 — domínio personalizado:
-  // "routes": [{ "pattern": "agenda.sonaydev.com", "custom_domain": true }],
+  // Etapa 10 — domínio personalizado (Custom Domain: a Cloudflare cria DNS e certificado)
+  "routes": [{ "pattern": "agenda.sonaydev.com", "custom_domain": true }],
   "observability": { "enabled": true }
 }
