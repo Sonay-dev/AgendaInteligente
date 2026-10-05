@@ -1,0 +1,17 @@
+# Copie para .dev.vars (uso local). Em produção use: npx wrangler secret put NOME
+NEXTJS_ENV=development
+APP_URL=http://localhost:3000
+# integração opcional com o Google Calendar (redirect: APP_URL/api/google/callback)
+GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxx
+# openssl rand -base64 32
+AUTH_SECRET=
+# 32 bytes em base64 (AES-256-GCM): openssl rand -base64 32
+ENCRYPTION_KEY=
+# segredo da rota interna /api/cron: openssl rand -hex 24
+CRON_SECRET=
+# e-mails que podem criar conta e entrar (e-mail + senha), separados por vírgula
+ALLOWED_EMAILS=voce@gmail.com
+# etapa 8C (Web Push)
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=

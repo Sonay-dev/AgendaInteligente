@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "agenda",
+  // custom-worker.ts = handler do OpenNext + scheduled() para o Cron Trigger
+  "main": "custom-worker.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "agenda-db",
+      // Cole aqui o id exibido por: npx wrangler d1 create agenda-db
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  // Um único gatilho a cada 5 min: reenvio de pendentes, renovação do events.watch
+  // (e, na etapa 8, lembretes e briefings). O plano free permite até 5 cron triggers.
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "vars": {
+    "APP_URL": "https://agenda.sonaydev.com"
+  },
+  // Etapa 10 — domínio personalizado:
+  // "routes": [{ "pattern": "agenda.sonaydev.com", "custom_domain": true }],
+  "observability": { "enabled": true }
+}
