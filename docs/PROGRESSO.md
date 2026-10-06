@@ -216,5 +216,29 @@ A conexão com o Google em produção **não foi testada** (Fase 7).
    origem `https://agenda.sonaydev.com`, redirect `https://agenda.sonaydev.com/api/google/callback`, novo client
    secret, gravar GOOGLE_CLIENT_ID/SECRET no painel do Worker, decidir "Em produção" x "Em teste" (7 dias).
 2. Usuário: criar a conta em produção e testar "Esqueci a senha" (e-mail ainda não testado de verdade).
-3. Depois: Fase 6 (cron já ok; ativar events.watch após conectar o Google), Fase 7 (checklist E2E),
+## Fase 7 em andamento (2026-10-06, tarde)
+- GOOGLE_CLIENT_ID/SECRET: o usuário tinha salvo pelo painel sem publicar (versão 334b7666); publicada e depois
+  regravados por stdin com os valores do `.dev.vars` (a pedido dele). 9 segredos no Worker.
+- Usuário criou a conta e conectou o Google em produção: conexão `active` com refresh token, sync completo,
+  canal `events.watch` criado (expira 2026-10-13; renovação pelo cron ainda não observada), eventos `synced`,
+  cron `*/5` ok sem erro. O escopo gravado ainda inclui `tasks` (herdado de autorização antiga via
+  `include_granted_scopes`); para limpar: remover o app em myaccount.google.com e reconectar.
+- App → Google Calendar funcionando (eventos chegam com `reminders.useDefault=false` + overrides).
+- Celular não avisava: o aviso aparecia só ao abrir o Google Agenda → configuração do POCO (HyperOS: bateria
+  "Sem restrições", início automático, notificações flutuantes). Instruções passadas; resultado não confirmado.
+- **Seletor de lembretes** (commit 5b1f870, deploy versão e7d43f79): chips Na hora/5/10/15/30 min/1 h/1 dia +
+  "Outro" (número + min/horas/dias) no formulário de compromisso (e na triagem); padrão segue a prioridade até o
+  usuário mexer; limite 5. `DEFAULT_REMINDERS` movido para `lib/reminders/defaults.ts`. 113 testes.
+  Produção conferida: "Teste 4" (13:33 BRT) salvo com popup 30 + 10 e `synced`.
+- Web Push do app: 0 aparelhos inscritos em produção (usuário ainda não ativou no celular).
+- Atenção (Windows): `TaskStop` do `npm run dev` deixa next/workerd vivos e o deploy falha com EPERM em
+  `.open-next` → matar a árvore do processo antes do `npm run deploy`.
+
+**Ponto de retomada (2026-10-06, noite):**
+1. Perguntar se os avisos do "Teste 4" (13:03 e 13:23) chegaram no celular e se o Google Agenda mostra
+   "30 minutos antes" e "10 minutos antes". Apagar os eventos "Teste…" se ele quiser.
+2. Testar Google Calendar → app (criar/editar no Google e ver chegar pelo webhook) e o "Esqueci a senha" (e-mail real).
+3. Opcional: ativar Web Push no celular; decidir sobre tirar `include_granted_scopes`; Google Cloud "Em produção"
+   x "Em teste" (7 dias).
+4. Depois: Fase 6 (cron já ok; ativar events.watch após conectar o Google), Fase 7 (checklist E2E),
    Fase 8 (deploy automático, perguntar antes). Roteiro completo da etapa 10 no transcript 39f8d36d.
