@@ -203,3 +203,18 @@ A conexão com o Google em produção **não foi testada** (Fase 7).
   pedido com conta existente e inexistente → mesma resposta; link sai no terminal; link → 302 para /redefinir-senha?token=;
   link falso → ?error=INVALID_TOKEN; nova senha com token falso → INVALID_TOKEN. Token de teste apagado. A troca de
   senha em si e o e-mail real não foram testados (testar em produção).
+
+## Verificação de marca do Google (2026-10-06)
+- Senha: olho + "Esqueci a senha" (a4c9fa1); `/privacidade` e `/termos` públicas (c4d1d5f).
+- Landing pública em `/` (nome, finalidade, recursos, por que pede o Google Calendar; "Abrir minha agenda" se logado);
+  `/cadastro` → `/login?modo=criar`; `/privacidade` detalhada (escopos, Uso Limitado, AES-GCM, exclusão em 30 dias).
+- OAuth pede só `openid`, `email`, `calendar.events` (escopo de Tasks removido, não era usado).
+- Commit 2823487 enviado; deploy versão c4b2c413. Produção sem login: `/` 200 e `/privacidade` 200 sem redirecionar.
+
+**Ponto de retomada:**
+1. Usuário: no Google Cloud, remover o escopo de Tasks em "Acesso a dados" (se estiver lá) e seguir a Fase 5:
+   origem `https://agenda.sonaydev.com`, redirect `https://agenda.sonaydev.com/api/google/callback`, novo client
+   secret, gravar GOOGLE_CLIENT_ID/SECRET no painel do Worker, decidir "Em produção" x "Em teste" (7 dias).
+2. Usuário: criar a conta em produção e testar "Esqueci a senha" (e-mail ainda não testado de verdade).
+3. Depois: Fase 6 (cron já ok; ativar events.watch após conectar o Google), Fase 7 (checklist E2E),
+   Fase 8 (deploy automático, perguntar antes). Roteiro completo da etapa 10 no transcript 39f8d36d.
