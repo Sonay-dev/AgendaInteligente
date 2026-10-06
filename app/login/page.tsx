@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { LoginForm } from "./login-form";
@@ -17,6 +18,14 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <LoginForm notice={notice} />
         <p className="text-center text-xs text-muted-foreground">
           A conexão com o Google Calendar é opcional e fica em Configurações, depois de entrar.
+        </p>
+        <p className="flex justify-center gap-4 text-xs text-muted-foreground">
+          <Link href="/privacidade" className="underline-offset-4 hover:underline">
+            Privacidade
+          </Link>
+          <Link href="/termos" className="underline-offset-4 hover:underline">
+            Termos de uso
+          </Link>
         </p>
       </div>
     </main>
