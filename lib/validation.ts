@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidRrule } from "./recurrence";
+import { MAX_REMINDER_MINUTES } from "./reminders/defaults";
 import { TASK_STATUS } from "./tasks-logic";
 import { isValidTimeZone } from "./time";
 
@@ -7,7 +8,7 @@ const isoDateTime = z.iso.datetime({ offset: true });
 const optionalText = (max: number) => z.string().trim().max(max).nullish();
 
 export const reminderInput = z.object({
-  minutesBefore: z.number().int().min(0).max(40320), // até 4 semanas (limite do Google)
+  minutesBefore: z.number().int().min(0).max(MAX_REMINDER_MINUTES),
   method: z.enum(["popup", "email"]),
 });
 
@@ -145,16 +146,4 @@ export type EventCreateInput = z.infer<typeof eventCreateSchema>;
 export type EventPatchInput = z.infer<typeof eventPatchSchema>;
 export type ReminderInput = z.infer<typeof reminderInput>;
 
-/** Lembretes padrão por prioridade (escalonamento da etapa 8C). */
-export const DEFAULT_REMINDERS: Record<number, ReminderInput[]> = {
-  1: [
-    { minutesBefore: 1440, method: "popup" },
-    { minutesBefore: 60, method: "popup" },
-    { minutesBefore: 10, method: "popup" },
-  ],
-  2: [
-    { minutesBefore: 60, method: "popup" },
-    { minutesBefore: 10, method: "popup" },
-  ],
-  3: [{ minutesBefore: 10, method: "popup" }],
-};
+export { DEFAULT_REMINDERS } from "./reminders/defaults";

@@ -6,10 +6,12 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { defaultReminderMinutes } from "@/lib/reminders/defaults";
 import { addDaysYmd, formatDateTime, fromZoned, zoned } from "@/lib/time";
 import type { QuickDraft } from "@/lib/nlp/parse-pt";
 import { cn } from "@/lib/utils";
 import type { CalendarEvent, Category, Conflict, EventPayload } from "./api";
+import { ReminderPicker } from "./reminder-picker";
 
 const RRULES = [
   { label: "Não repete", value: "" },
@@ -80,7 +82,11 @@ function EventFormInner({ open, onOpenChange, initial, timezone, categories, onS
   const days = weeklyDays(rrule);
   const presetMatch = RRULES.some((r) => r.value === rrule);
   const repeatValue = presetMatch ? rrule : days ? CUSTOM_WEEKLY : rrule;
-  const [reminders, setReminders] = useState(ev?.reminders?.map((r) => r.minutesBefore).join(", ") ?? "");
+  // null = segue o padrão da prioridade (muda junto com ela) até o usuário mexer
+  const [customReminders, setCustomReminders] = useState<number[] | null>(
+    ev?.reminders ? [...new Set(ev.reminders.map((r) => r.minutesBefore))].sort((a, b) => b - a) : null,
+  );
+  const reminderMinutes = customReminders ?? defaultReminderMinutes(priority);
   const [conflicts, setConflicts] = useState<Conflict[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -96,10 +102,6 @@ function EventFormInner({ open, onOpenChange, initial, timezone, categories, onS
       endAt = fromZoned(date, end, tz);
       if (endAt <= startAt) endAt = fromZoned(addDaysYmd(date, 1), end, tz); // atravessa a meia-noite
     }
-    const mins = reminders
-      .split(/[,\s]+/)
-      .map((s) => Number(s))
-      .filter((n) => Number.isInteger(n) && n >= 0);
     const payload: EventPayload = {
       title: title.trim(),
       description: description || null,
@@ -111,7 +113,8 @@ function EventFormInner({ open, onOpenChange, initial, timezone, categories, onS
       priority,
       categoryId: categoryId || null,
       rrule: rrule || null,
-      ...(reminders.trim() ? { reminders: mins.slice(0, 5).map((m) => ({ minutesBefore: m, method: "popup" as const })) } : {}),
+      // sempre explícito: o que aparece marcado é o que vai para o servidor e para o Google
+      reminders: reminderMinutes.map((m) => ({ minutesBefore: m, method: "popup" as const })),
       allowConflicts,
     };
     setSaving(true);
@@ -229,10 +232,13 @@ function EventFormInner({ open, onOpenChange, initial, timezone, categories, onS
             )}
             {rrule && <p className="text-xs text-muted-foreground">A data acima é a primeira ocorrência.</p>}
           </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="reminders">Lembretes (min antes, separados por vírgula)</Label>
-            <Input id="reminders" inputMode="numeric" placeholder="padrão pela prioridade" value={reminders} onChange={(e) => setReminders(e.target.value)} />
-          </div>
+          <ReminderPicker
+            value={reminderMinutes}
+            onChange={setCustomReminders}
+            isDefault={customReminders === null}
+            onResetDefault={() => setCustomReminders(null)}
+            selectClass={selectClass}
+          />
           <div className="grid gap-1.5">
             <Label htmlFor="location">Local</Label>
             <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
