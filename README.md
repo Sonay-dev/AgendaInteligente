@@ -17,7 +17,7 @@ Arquitetura e decisões: [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) · Andamen
 1. Crie um projeto em <https://console.cloud.google.com>.
 2. **APIs e serviços → Biblioteca**: ative a **Google Calendar API** e a **Google Tasks API**.
 3. **Tela de consentimento OAuth**: tipo *Externo*, status *Teste*, e adicione seu e-mail em **Usuários de teste**.
-   Escopos usados: `openid`, `email`, `calendar.events`, `tasks`.
+   Escopos usados: `openid`, `email`, `calendar.events` (o de Tasks volta quando a sincronização com o Google Tasks for ligada).
 4. **Credenciais → Criar credenciais → ID do cliente OAuth → Aplicativo da Web**:
    - Origens JavaScript autorizadas: `http://localhost:3000` e `https://agenda.sonaydev.com`
    - URIs de redirecionamento autorizados:

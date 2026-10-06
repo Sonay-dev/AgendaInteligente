@@ -5,7 +5,7 @@ import { LoginForm } from "./login-form";
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   if (await getCurrentUser()) redirect("/agenda");
-  const { senha } = await searchParams;
+  const { senha, modo } = await searchParams;
   const notice = senha === "redefinida" ? "Senha alterada. Entre com a nova senha." : undefined;
 
   return (
@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           <h1 className="text-2xl font-semibold tracking-tight">Agenda Inteligente</h1>
           <p className="text-sm text-muted-foreground">Entre com seu e-mail e senha.</p>
         </div>
-        <LoginForm notice={notice} />
+        <LoginForm notice={notice} initialMode={modo === "criar" ? "criar" : "entrar"} />
         <p className="text-center text-xs text-muted-foreground">
           A conexão com o Google Calendar é opcional e fica em Configurações, depois de entrar.
         </p>

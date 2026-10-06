@@ -26,9 +26,9 @@ function errorMessage(err: { code?: string; message?: string; status?: number })
 
 type Mode = "entrar" | "criar" | "esqueci";
 
-export function LoginForm({ notice }: { notice?: string }) {
+export function LoginForm({ notice, initialMode = "entrar" }: { notice?: string; initialMode?: Mode }) {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("entrar");
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(notice ?? null);

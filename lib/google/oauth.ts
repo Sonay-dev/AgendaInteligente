@@ -1,5 +1,5 @@
 import "server-only";
-// OAuth 2.0 do Google só para a INTEGRAÇÃO (Calendar + Tasks). O login do app é e-mail + senha.
+// OAuth 2.0 do Google só para a INTEGRAÇÃO com o Calendar. O login do app é e-mail + senha.
 // Fluxo: /api/google/connect → Google → /api/google/callback (state + PKCE em cookie httpOnly).
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { Db } from "@/db";
@@ -12,7 +12,7 @@ export const GOOGLE_SCOPES = [
   "openid",
   "email",
   "https://www.googleapis.com/auth/calendar.events",
-  "https://www.googleapis.com/auth/tasks",
+  // Tasks fica de fora enquanto a sincronização com o Google Tasks estiver desligada (declarar só o que é usado)
 ];
 
 export const OAUTH_COOKIE = "agenda.google_oauth";
