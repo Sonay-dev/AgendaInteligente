@@ -242,3 +242,29 @@ A conexão com o Google em produção **não foi testada** (Fase 7).
    x "Em teste" (7 dias).
 4. Depois: Fase 6 (cron já ok; ativar events.watch após conectar o Google), Fase 7 (checklist E2E),
    Fase 8 (deploy automático, perguntar antes). Roteiro completo da etapa 10 no transcript 39f8d36d.
+
+## Módulo Notas & Lembretes Kanban (2026-11-12)
+- **Tela `/notas`**: Quadro Kanban executivo para anotações, lembretes e fluxo de gestão com foco em organização e métricas.
+- **Cards coloridos por status**:
+  - 🔴 **Pendentes**: cards com visual vermelho vivo (`border-l-5 border-l-red-500`, fundo sutil avermelhado, badge vermelho).
+  - 🟡 **Em Curso**: cards com visual amarelo/âmbar vivo (`border-l-5 border-l-amber-500`, fundo sutil amarelado, badge âmbar).
+  - 🟢 **Realizados**: cards com visual verde esmeralda (`border-l-5 border-l-emerald-500`, fundo sutil esverdeado, badge verde).
+- **Checkbox com arquivamento e restauração**:
+  - Checkbox direto no topo do card: marca como realizado ou arquiva instantaneamente.
+  - Gaveta/modal **"Ver Arquivadas"** para consultar, buscar e desarquivar com 1 clique (ou desarquivar todas).
+- **Painel Executivo de Métricas (Dashboard KPIs)**:
+  - Total de cards ativos, contagem e porcentagem exata por coluna (% pendentes, % em curso, % realizados).
+  - Barra matemática de taxa de conclusão e eficiência operacional.
+  - Indicador de prioridades críticas P1 e progresso global de checklists.
+- **Checklist interativo integrado nos cards**:
+  - Itens ticáveis diretamente no próprio card, com barra de progresso quantitativa (`X/Y · Z%`).
+- **Recursos adicionais**:
+  - Drag & Drop nativo entre colunas + botões rápidos ⬅️ ➡️ de movimentação.
+  - Lembrete com data e hora (alerta visual pulsante em caso de atraso).
+  - Fixar nota no topo 📌.
+  - Alternância entre visualização **Kanban** e visualização **Tabela/Matriz** gerencial.
+  - Filtros instantâneos por texto, prioridade (P1, P2, P3), tags/categorias e ordenação.
+  - Tabela `notes` em `db/schema.ts` + migração SQL `drizzle/0003_notes.sql` + fallback resiliente no D1 (`ensureNotesTable`).
+  - Cache offline no Service Worker (`public/sw.js`) + persistência local com backup no LocalStorage.
+  - Item "Notas" adicionado à barra de navegação (`components/app-nav.tsx`).
+  - Testes unitários puros em `tests/notes-logic.test.ts`.

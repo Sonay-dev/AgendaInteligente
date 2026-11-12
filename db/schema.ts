@@ -341,8 +341,44 @@ export const auditLog = sqliteTable(
   (t) => [index("audit_user_created").on(t.userId, t.createdAt)],
 );
 
+// ------------------------------------------------------------------ Notas Kanban
+export const NOTE_STATUS = ["pendente", "em_curso", "realizado"] as const;
+export type NoteStatus = (typeof NOTE_STATUS)[number];
+
+export const notes = sqliteTable(
+  "notes",
+  {
+    id: id(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    content: text("content"),
+    status: text("status", { enum: NOTE_STATUS }).notNull().default("pendente"),
+    priority: integer("priority").notNull().default(3), // 1: Alta, 2: Média, 3: Baixa
+    tag: text("tag"),
+    categoryId: text("category_id").references(() => categories.id, { onDelete: "set null" }),
+    isArchived: bool("is_archived").notNull().default(false),
+    isPinned: bool("is_pinned").notNull().default(false),
+    checklist: text("checklist"), // JSON: Array<{ id: string; text: string; done: boolean }>
+    reminderAt: text("reminder_at"), // ISO UTC
+    completedAt: text("completed_at"),
+    archivedAt: text("archived_at"),
+    color: text("color"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("notes_user_status").on(t.userId, t.status),
+    index("notes_user_archived").on(t.userId, t.isArchived),
+    index("notes_user_priority").on(t.userId, t.priority),
+  ],
+);
+
 export type EventRow = typeof events.$inferSelect;
 export type NewEventRow = typeof events.$inferInsert;
 export type ReminderRow = typeof reminders.$inferSelect;
 export type SyncStateRow = typeof syncState.$inferSelect;
 export type GoogleConnectionRow = typeof googleConnections.$inferSelect;
+export type NoteRow = typeof notes.$inferSelect;
+export type NewNoteRow = typeof notes.$inferInsert;

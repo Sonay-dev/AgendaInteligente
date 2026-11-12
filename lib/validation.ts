@@ -141,6 +141,55 @@ export const pushSubscribeSchema = z.object({
 export const pushUnsubscribeSchema = z.object({ endpoint: z.string().max(1000) });
 export const notificationActionSchema = z.object({ token: z.string().max(1000), action: z.enum(["concluir", "adiar"]) });
 
+// ------------------------------------------------------------------ notas kanban
+export const NOTE_STATUS = ["pendente", "em_curso", "realizado"] as const;
+export type NoteStatus = (typeof NOTE_STATUS)[number];
+
+export const checklistItemSchema = z.object({
+  id: z.string(),
+  text: z.string().trim().min(1, "item não pode ser vazio").max(300),
+  done: z.boolean().default(false),
+});
+
+const noteBase = z.object({
+  title: z.string().trim().min(1, "título obrigatório").max(300),
+  content: optionalText(10000),
+  status: z.enum(NOTE_STATUS),
+  priority: z.number().int().min(1).max(3),
+  tag: optionalText(50),
+  categoryId: z.uuid().nullish(),
+  isArchived: z.boolean(),
+  isPinned: z.boolean(),
+  checklist: z.array(checklistItemSchema).max(100).optional(),
+  reminderAt: isoDateTime.nullish(),
+  color: optionalText(30),
+});
+
+export const noteCreateSchema = noteBase.extend({
+  status: noteBase.shape.status.default("pendente"),
+  priority: noteBase.shape.priority.default(3),
+  isArchived: noteBase.shape.isArchived.default(false),
+  isPinned: noteBase.shape.isPinned.default(false),
+});
+
+export const notePatchSchema = noteBase.partial().extend({
+  completedAt: isoDateTime.nullish(),
+  archivedAt: isoDateTime.nullish(),
+});
+
+export const noteListQuerySchema = z.object({
+  archived: z
+    .enum(["true", "false", "all"])
+    .optional()
+    .transform((val: "true" | "false" | "all" | undefined): boolean | "all" =>
+      val === "true" ? true : val === "all" ? "all" : false,
+    ),
+});
+
+export type NoteCreateInput = z.infer<typeof noteCreateSchema>;
+export type NotePatchInput = z.infer<typeof notePatchSchema>;
+export type ChecklistItemInput = z.infer<typeof checklistItemSchema>;
+
 export type CategoryInput = z.infer<typeof categorySchema>;
 export type EventCreateInput = z.infer<typeof eventCreateSchema>;
 export type EventPatchInput = z.infer<typeof eventPatchSchema>;

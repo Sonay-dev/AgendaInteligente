@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BellRing, CalendarDays, Inbox, ListChecks, ShieldCheck } from "lucide-react";
+import { BellRing, CalendarDays, Columns3, Inbox, ListChecks, ShieldCheck } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,11 @@ const FEATURES = [
     icon: Inbox,
     title: "Caixa de entrada",
     text: "Anote ou dite qualquer ideia na hora e decida depois se vira compromisso, tarefa ou nada.",
+  },
+  {
+    icon: Columns3,
+    title: "Quadro Kanban de Notas & Gestão",
+    text: "Anotações e lembretes com cards coloridos por status (vermelho pendente, amarelo em curso, verde realizado), checklist e arquivamento.",
   },
 ];
 

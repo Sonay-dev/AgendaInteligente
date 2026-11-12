@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Inbox, ListChecks, Settings } from "lucide-react";
+import { CalendarDays, Columns3, Inbox, ListChecks, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** Dispare após mudar tarefas/caixa de entrada para atualizar os contadores da barra. */
@@ -12,6 +12,7 @@ export const refreshCounts = () => window.dispatchEvent(new Event(COUNTS_EVENT))
 const ITEMS = [
   { href: "/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/tarefas", label: "Tarefas", icon: ListChecks, count: "overdue" as const },
+  { href: "/notas", label: "Notas", icon: Columns3 },
   { href: "/caixa-de-entrada", label: "Caixa", icon: Inbox, count: "inbox" as const },
   { href: "/configuracoes", label: "Ajustes", icon: Settings },
 ];
@@ -54,7 +55,7 @@ export function AppNav() {
       aria-label="Principal"
       className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-background/80"
     >
-      <ul className="mx-auto grid h-16 max-w-md grid-cols-4">
+      <ul className="mx-auto grid h-16 max-w-lg grid-cols-5">
         {ITEMS.map(({ href, label, icon: Icon, count }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           const n = count && counts ? counts[count] : 0;

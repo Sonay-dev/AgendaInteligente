@@ -13,7 +13,7 @@ const NETWORK_TIMEOUT_MS = 4000; // rede lenta: depois disso, responde com a có
 const DEV = ["localhost", "127.0.0.1"].includes(self.location.hostname);
 
 // dados que valem a leitura offline (só do próprio usuário; apagados ao sair da conta)
-const CACHEABLE_API = /^\/api\/(events|tasks|inbox|categories|counts|google\/status)(\/|$)/;
+const CACHEABLE_API = /^\/api\/(events|tasks|notes|inbox|categories|counts|google\/status)(\/|$)/;
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => {
